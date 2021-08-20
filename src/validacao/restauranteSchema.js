@@ -1,61 +1,61 @@
 const yup = require('./config');
 
 const cadastrarRestaurante = yup.object().shape({
-    nome: yup
-        .string()
-        .max(50)
-        .required(),
-    
-    descricao: yup    
-        .string()
-        .max(100),
+	nome: yup
+		.string()
+		.max(50)
+		.required(),
 
-    idCategoria: yup
-        .number()
-        .required()
-        .min(1),
+	descricao: yup
+		.string()
+		.max(100),
 
-    taxaEntrega: yup
-        .number()
-        .min(0),
+	idCategoria: yup
+		.number()
+		.required()
+		.min(1),
 
-    tempoEntregaEmMinutos: yup
-        .number()
-        .required(),
-    
-    valorMinimoPedido: yup
-        .number()
-        .required()
-        .min(0)
+	taxaEntrega: yup
+		.number()
+		.min(0),
+
+	tempoEntregaEmMinutos: yup
+		.number()
+		.required(),
+
+	valorMinimoPedido: yup
+		.number()
+		.required()
+		.min(0)
 });
 
 const editarRestaurante = yup.object().shape({
-    nome: yup
-        .string()
-        .max(50),
-    
-    descricao: yup    
-        .string()
-        .max(100),
+	nome: yup
+		.string()
+		.max(50),
 
-    idCategoria: yup
-        .number()
-        .min(1),
+	descricao: yup
+		.string()
+		.max(100),
 
-    taxaEntrega: yup
-        .number()
-        .min(0),
+	idCategoria: yup
+		.number()
+		.min(1),
 
-    tempoEntregaEmMinutos: yup
-        .number(),
-    
-    valorMinimoPedido: yup
-        .number()
-        .min(0)
+	taxaEntrega: yup
+		.number()
+		.min(0),
+
+	tempoEntregaEmMinutos: yup
+		.number(),
+
+	valorMinimoPedido: yup
+		.number()
+		.min(0)
 });
 
-module.exports = 
+module.exports =
 {
-    cadastrarRestaurante,
-    editarRestaurante
+	cadastrarRestaurante,
+	editarRestaurante
 };
