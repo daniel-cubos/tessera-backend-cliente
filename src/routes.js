@@ -7,12 +7,13 @@ const funcionalidadeCliente = require('./controladores/cliente/clienteFuncionali
 const router = express();
 
 router.post('/login', funcionalidadeCliente.fazerLogin);
-router.post('/clientes', crudCliente.cadastrarCliente);
+router.post('/cliente', crudCliente.cadastrarCliente);
+router.put('/cliente', filtroLogin, crudCliente.editarCliente);
 
-router.get('/produtos', filtroLogin, funcionalidadeCliente.buscarRestaurantes);
-router.get('/produtos/:id', filtroLogin, funcionalidadeCliente.verCardapioRestaurante);
-router.put('/produtos/:id', filtroLogin, funcionalidadeCliente.detalharProdutoRestaurante);
-router.post('/produtos', filtroLogin, funcionalidadeCliente.adcionarEndereco);
-router.post('/produtos/:id', filtroLogin, funcionalidadeCliente.fecharPedido);
+router.get('/restaurante', filtroLogin, funcionalidadeCliente.listarRestaurantes);
+router.get('/restaurante/:id', filtroLogin, funcionalidadeCliente.mostrarCardapio);
+router.get('/restaurante/:idRestaurante/:idProduto', filtroLogin, funcionalidadeCliente.detalharProdutoRestaurante);
+router.post('/pedido/addendereco', filtroLogin, funcionalidadeCliente.adcionarEndereco);
+router.post('/pedido/fecharpedido', filtroLogin, funcionalidadeCliente.fecharPedido);
 
 module.exports = router;

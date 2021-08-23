@@ -28,24 +28,87 @@ const fazerLogin = async (req, res) => {
 	}
 }
 
-const buscarRestaurantes = async (req, res) => {
+const listarRestaurantes = async (req, res) => {
+	try {
+		const restaurante = await knex('restaurante');
 
+		if (restaurante.length === 0)
+			return res.status(404).json("Desculpa, não há restaurantes cadastrados em sua região...");
+
+		return res.status(200).json(restaurante);
+	}
+	catch (error) {
+		return res.status(400).json(error.message);
+	}
 }
 
-const verCardapioRestaurante = async (req, res) => {
+const mostrarCardapio = async (req, res) => {
+	try {
+		const ativo = true;
+		const { id: restaurante_id } = req.params;
 
+		const produto = await knex('produto').select('id', 'nome', 'preco', 'descricao').where({ restaurante_id, ativo });
+
+		if (produto.length === 0)
+			return res.json('Desculpe, estamos sem produtos ativos');
+
+		return res.status(200).json(produto);
+	}
+	catch (error) {
+		return res.status(400).json(error.message);
+	}
 }
 
 const detalharProdutoRestaurante = async (req, res) => {
+	try {
+		const ativo = true;
+		const { idRestaurante, idProduto } = req.params;
 
+		const produto = await knex('produto')
+			.select('id', 'nome', 'preco', 'descricao').where({ id: idProduto, restaurante_id: idRestaurante, ativo }).first();
+
+		const restaurante = await knex('restaurante')
+			.select('tempo_entrega_minutos', 'valor_minimo_pedido', 'taxa_entrega').where({ id: idRestaurante }).first();
+
+		if (produto.length === 0)
+			return res.json('Desculpe, estamos em produtos ativos');
+
+		return res.status(200).json({ produto, restaurante });
+	} catch (error) {
+		return res.status(400).json(error.message);
+	}
 }
 
 const adcionarEndereco = async (req, res) => {
-	const { cep, endereco, complemento } = req.body
+	try {
+		const novoEndereco = req.body;
+		await schema.verificarCEP.validate(req.body);
+
+		const enderecoCadastrado = await knex('endereco').insert(novoEndereco).returning('*');
+
+		if (!enderecoCadastrado)
+			return res.status(400).json('Não foi possível realizar o cadastro do endereço.');
+
+		return res.status(200).json("Endereco cadastrado com sucesso");
+	}
+	catch (error) {
+		return res.status(400).json(error.message);
+	}
 }
 
 const fecharPedido = async (req, res) => {
+	const { carrinho } = req.body;
 
+	try {
+		for (let item of carrinho)
+			await schema.verificarCarrinho.validate(item);
+
+
+		return res.json("continua")
+	}
+	catch (error) {
+		return res.status(400).json(error.message);
+	}
 }
 
 
@@ -53,5 +116,10 @@ const fecharPedido = async (req, res) => {
 
 module.exports =
 {
-	fazerLogin
+	fazerLogin,
+	listarRestaurantes,
+	mostrarCardapio,
+	detalharProdutoRestaurante,
+	adcionarEndereco,
+	fecharPedido
 }

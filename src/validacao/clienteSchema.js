@@ -20,7 +20,7 @@ const cadastrarCliente = yup.object().shape({
 	telefone: yup
 		.number()
 		.required()
-		.min(11),
+		.min(8),
 
 });
 
@@ -49,11 +49,65 @@ const loginCliente = yup.object().shape({
 	senha: yup
 		.string()
 		.required()
+		.min(6)
 });
+
+const verificarCEP = yup.object().shape({
+	cep: yup
+		.string()
+		.required()
+		.min(8)
+		.max(8),
+
+	rua: yup
+		.string()
+		.strict()
+		.required(),
+
+	bairro: yup
+		.string()
+		.strict()
+		.required(),
+
+	cidade: yup
+		.string()
+		.strict()
+		.required(),
+
+	estado: yup
+		.string()
+		.min(2)
+		.max(2)
+		.required(),
+
+	numero: yup
+		.string()
+		.required(),
+
+	complemento: yup
+		.string()
+		.notRequired()
+});
+
+const verificarCarrinho = yup.object().shape({
+	idProduto: yup
+		.number()
+		.required()
+		.positive()
+		.min(1),
+
+	quantidade: yup
+		.number()
+		.positive()
+		.required(),
+});
+
 
 module.exports =
 {
 	cadastrarCliente,
 	editarCliente,
-	loginCliente
+	loginCliente,
+	verificarCEP,
+	verificarCarrinho
 };
