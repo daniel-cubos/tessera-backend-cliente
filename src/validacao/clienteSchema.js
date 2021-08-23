@@ -55,38 +55,18 @@ const loginCliente = yup.object().shape({
 const verificarCEP = yup.object().shape({
 	cep: yup
 		.string()
-		.required()
 		.min(8)
-		.max(8),
+		.max(8)
+		.required(),
 
-	rua: yup
+	endereco: yup
 		.string()
 		.strict()
-		.required(),
-
-	bairro: yup
-		.string()
-		.strict()
-		.required(),
-
-	cidade: yup
-		.string()
-		.strict()
-		.required(),
-
-	estado: yup
-		.string()
-		.min(2)
-		.max(2)
-		.required(),
-
-	numero: yup
-		.string()
 		.required(),
 
 	complemento: yup
 		.string()
-		.notRequired()
+		.required()
 });
 
 const verificarCarrinho = yup.object().shape({
@@ -102,6 +82,26 @@ const verificarCarrinho = yup.object().shape({
 		.required(),
 });
 
+const verificarPedido = yup.object().shape({
+	idRestaurante: yup
+		.number()
+		.required()
+		.positive(),
+
+	subtotal: yup
+		.number()
+		.positive()
+		.required(),
+
+	taxaEntrega: yup
+		.number()
+		.required(),
+
+	totalPedido: yup
+		.number()
+		.positive()
+		.required(),
+});
 
 module.exports =
 {
@@ -109,5 +109,6 @@ module.exports =
 	editarCliente,
 	loginCliente,
 	verificarCEP,
-	verificarCarrinho
+	verificarCarrinho,
+	verificarPedido
 };

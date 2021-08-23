@@ -97,20 +97,53 @@ const adcionarEndereco = async (req, res) => {
 }
 
 const fecharPedido = async (req, res) => {
-	const { carrinho } = req.body;
+	const { authorization } = req.headers;
+	const { carrinho, ...dadosPedido } = req.body;
 
 	try {
 		for (let item of carrinho)
 			await schema.verificarCarrinho.validate(item);
+		await schema.verificarPedido.validate(dadosPedido);
 
+		const { id: cliente_id } = jwt.verify(authorization, process.env.SENHA_JWT);
 
-		return res.json("continua")
+		const novoPedido = {
+			cliente_id,
+			restaurante_id: dadosPedido.idRestaurante,
+			subtotal: dadosPedido.subtotal,
+			taxa_entrega: dadosPedido.taxaEntrega,
+			total_pedido: dadosPedido.totalPedido,
+		}
+
+		const pedidoCadastrado = await knex('pedido').insert(novoPedido).returning('*');
+
+		if (!pedidoCadastrado)
+			return res.status(400).json('Não foi possível realizar o cadastro do pedido.');
+
+		const { id: pedido_id } = pedidoCadastrado[0];
+
+		const produtosNoCarrinho = [];
+
+		for (let item of carrinho) {
+			let itemPedido = {
+				pedido_id,
+				produto_id: item.idProduto,
+				quantidade_itens: item.quantidade
+			}
+			produtosNoCarrinho.push(itemPedido);
+		}
+
+		const carrinhoCadastrado = await knex('itens_pedido').insert(produtosNoCarrinho).returning('*');
+
+		if (!carrinhoCadastrado)
+			return res.status(400).json('Não foi possível realizar o cadastro os itens do pedido.');
+
+		return res.json("Pedido Finalizado com sucesso!")
 	}
 	catch (error) {
 		return res.status(400).json(error.message);
 	}
 }
-
 
 
 
