@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { Knex } = require('knex');
 const knex = require('../../bancodedados/conexao');
 const schema = require('../../validacao/clienteSchema');
 
@@ -34,27 +35,21 @@ const buscarRestaurantes = async (req, res) => {
 
 const verCardapioRestaurante = async (req, res) => {
 	const { id } = req.params;
+
 	try {
-		const restaurante = await knex
-			.select('*')
-			.from('restaurante')
-			.where({ usuario_id: id })
-			.first();
+		const produtos = await knex('produto')
+			.where('restaurante_id', id)
+			.andWhere('ativo', true);
 
-		const imagemCategoria = await knex
-			.column({ img_categoria: 'imagem' })
-			.select()
-			.from('categoria')
-			.where({ id: restaurante.categoria_id })
-			.first();
+		if (produtos.length === 0) {
+			return res.status(404).json('Nenhum produto encontrado.');
+		}
 
-		restaurante.img_categoria = imagemCategoria.img_categoria;
-
-		return res.status(200).json(restaurante);
+		res.json(produtos);
 	} catch (error) {
-		console.log(error);
+		res.status(400).json(error.message);
 	}
-}
+};
 
 const detalharProdutoRestaurante = async (req, res) => {
 
