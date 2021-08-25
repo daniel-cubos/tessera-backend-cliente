@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { Knex } = require('knex');
 const knex = require('../../bancodedados/conexao');
 const schema = require('../../validacao/clienteSchema');
 
