@@ -20,7 +20,7 @@ const cadastrarCliente = yup.object().shape({
 	telefone: yup
 		.number()
 		.required()
-		.min(11),
+		.min(8),
 
 });
 
@@ -49,11 +49,66 @@ const loginCliente = yup.object().shape({
 	senha: yup
 		.string()
 		.required()
+		.min(6)
+});
+
+const verificarCEP = yup.object().shape({
+	cep: yup
+		.string()
+		.min(8)
+		.max(8)
+		.required(),
+
+	endereco: yup
+		.string()
+		.strict()
+		.required(),
+
+	complemento: yup
+		.string()
+		.required()
+});
+
+const verificarCarrinho = yup.object().shape({
+	idProduto: yup
+		.number()
+		.required()
+		.positive()
+		.min(1),
+
+	quantidade: yup
+		.number()
+		.positive()
+		.required(),
+});
+
+const verificarPedido = yup.object().shape({
+	idRestaurante: yup
+		.number()
+		.required()
+		.positive(),
+
+	subtotal: yup
+		.number()
+		.positive()
+		.required(),
+
+	taxaEntrega: yup
+		.number()
+		.required(),
+
+	totalPedido: yup
+		.number()
+		.positive()
+		.required(),
 });
 
 module.exports =
 {
 	cadastrarCliente,
 	editarCliente,
-	loginCliente
+	loginCliente,
+	verificarCEP,
+	verificarCarrinho,
+	verificarPedido
 };
