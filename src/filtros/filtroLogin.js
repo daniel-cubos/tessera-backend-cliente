@@ -10,7 +10,7 @@ const filtroLogin = async (req, res, next) => {
 	try {
 		const token = authorization.replace('Bearer', '').trim();
 		const { id } = jwt.verify(token, process.env.SENHA_JWT);
-		const usuarioExiste = await knex('clientes').where({ id }).first();
+		const usuarioExiste = await knex('cliente').where({ id }).first();
 
 		if (!usuarioExiste)
 			return res.status(404).json('Cliente não encontrado');

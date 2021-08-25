@@ -38,4 +38,15 @@ async function atualizarImagem(imagemProduto, caminhoImagem) {
 	return false;
 }
 
-module.exports = { uploadImagem, atualizarImagem };
+async function pegarUrlImagem(caminhoImagem) {
+	const { publicURL, error } = await supabase
+		.storage
+		.from(process.env.SUPABASE_BUCKET)
+		.getPublicUrl(caminhoImagem)
+
+	if (error)
+		return error.message;
+
+	return publicURL;
+}
+module.exports = { uploadImagem, atualizarImagem, pegarUrlImagem };

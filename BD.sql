@@ -1,11 +1,13 @@
 create database api_restaurant;
 
-create table if not exists clientes
+create table if not exists cliente
 (
 	id serial unique primary key not null,
 	nome varchar(100) not null,
 	email varchar(100) not null,
-	senha text not null
+ 	telefone varchar(100) not null,
+	senha text not null,
+	img_cliente text
 );
 
 create table if not exists endereco

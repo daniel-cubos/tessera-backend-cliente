@@ -9,7 +9,7 @@ const fazerLogin = async (req, res) => {
 	try {
 		await schema.loginCliente.validate(req.body);
 
-		const cliente = await knex('clientes').where({ email }).first();
+		const cliente = await knex('cliente').where({ email }).first();
 
 		if (!cliente)
 			return res.status(404).json('Usuario não encontrado');
@@ -43,11 +43,11 @@ const listarRestaurantes = async (req, res) => {
 }
 
 const mostrarCardapio = async (req, res) => {
-	try {
-		const ativo = true;
-		const { id: restaurante_id } = req.params;
+	const ativo = true;
+	const { id: restaurante_id } = req.params;
 
-		const produto = await knex('produto').select('id', 'nome', 'preco', 'descricao').where({ restaurante_id, ativo });
+	try {
+		const produto = await knex('produto').where({ restaurante_id, ativo });
 
 		if (produto.length === 0)
 			return res.json('Desculpe, estamos sem produtos ativos');
@@ -61,28 +61,38 @@ const mostrarCardapio = async (req, res) => {
 
 const detalharProdutoRestaurante = async (req, res) => {
 	try {
-		const ativo = true;
 		const { idRestaurante, idProduto } = req.params;
 
-		const produto = await knex('produto')
-			.select('id', 'nome', 'preco', 'descricao').where({ id: idProduto, restaurante_id: idRestaurante, ativo }).first();
+		const produto = await knex('produto').where({ id: idProduto, restaurante_id: idRestaurante, ativo: true }).first();
+		const restaurante = await knex('restaurante').where({ id: idRestaurante }).first();
 
-		const restaurante = await knex('restaurante')
-			.select('tempo_entrega_minutos', 'valor_minimo_pedido', 'taxa_entrega').where({ id: idRestaurante }).first();
+		const { restaurante_id, ativo, ...infoProduto } = produto;
+		const { usuario_id, ...infoRestaurante } = restaurante;
 
 		if (produto.length === 0)
 			return res.json('Desculpe, estamos em produtos ativos');
 
-		return res.status(200).json({ produto, restaurante });
+		return res.status(200).json({ infoProduto, infoRestaurante });
 	} catch (error) {
 		return res.status(400).json(error.message);
 	}
 }
 
 const adcionarEndereco = async (req, res) => {
+	const { authorization } = req.headers;
+	const { cep, endereco, complemento } = req.body;
+
 	try {
-		const novoEndereco = req.body;
 		await schema.verificarCEP.validate(req.body);
+
+		const { id: cliente_id } = jwt.verify(authorization, process.env.SENHA_JWT);
+
+		const novoEndereco = {
+			cliente_id,
+			cep,
+			endereco,
+			complemento
+		}
 
 		const enderecoCadastrado = await knex('endereco').insert(novoEndereco).returning('*');
 
@@ -136,7 +146,7 @@ const fecharPedido = async (req, res) => {
 		const carrinhoCadastrado = await knex('itens_pedido').insert(produtosNoCarrinho).returning('*');
 
 		if (!carrinhoCadastrado)
-			return res.status(400).json('Não foi possível realizar o cadastro os itens do pedido.');
+			return res.status(400).json('Não foi possível realizar o cadastro os itens do carrinho.');
 
 		return res.json("Pedido Finalizado com sucesso!")
 	}
@@ -145,6 +155,9 @@ const fecharPedido = async (req, res) => {
 	}
 }
 
+const listarPedidos = async (req, res) => {
+
+}
 
 
 module.exports =
