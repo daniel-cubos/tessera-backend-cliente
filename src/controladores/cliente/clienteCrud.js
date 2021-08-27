@@ -15,7 +15,7 @@ const cadastrarCliente = async (req, res) => {
 		if (existeUsuario)
 			return res.status(400).json('Email já cadastrado');
 
-		const { senha: senhaCliente, ...dadosCliente } = requisicaoCliente;
+		const { senha: senhaCliente, imagemCliente, ...dadosCliente } = requisicaoCliente;
 		const senhaCriptografada = await bcrypt.hash(senhaCliente, 10);
 
 		const novoCliente = { ...dadosCliente, senha: senhaCriptografada }
@@ -27,7 +27,7 @@ const cadastrarCliente = async (req, res) => {
 
 		if (requisicaoCliente.imagemCliente) {
 			const caminhoImagem = 'clientes/' + clienteCadastrado[0].id + '.jpg';
-			const uploadImage = uploadImagem(restaurante.imagemRestaurante, caminhoImagem);
+			const uploadImage = uploadImagem(requisicaoCliente.imasgemCliente, caminhoImagem);
 
 			if (uploadImage.length === 0)
 				return res.status(400).json(uploadImage);

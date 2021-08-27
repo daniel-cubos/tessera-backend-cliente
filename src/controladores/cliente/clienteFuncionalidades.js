@@ -48,12 +48,13 @@ const mostrarCardapio = async (req, res) => {
 	const { id: restaurante_id } = req.params;
 
 	try {
-		const produto = await knex('produto').where({ restaurante_id, ativo });
+		const produtos = await knex('produto').where({ restaurante_id, ativo });
+		const restaurante = await knex('restaurante').where({ id: restaurante_id }).first();
 
-		if (produto.length === 0)
+		if (produtos.length === 0)
 			return res.json('Desculpe, estamos sem produtos ativos');
 
-		return res.status(200).json(produto);
+		return res.status(200).json({ produtos, restaurante });
 	}
 	catch (error) {
 		return res.status(400).json(error.message);
@@ -64,16 +65,29 @@ const detalharProdutoRestaurante = async (req, res) => {
 	try {
 		const { idRestaurante, idProduto } = req.params;
 
-		const produto = await knex('produto').where({ id: idProduto, restaurante_id: idRestaurante, ativo: true }).first();
-		const restaurante = await knex('restaurante').where({ id: idRestaurante }).first();
+		const produtos = await knex('restaurante')
+			.where({ restaurante_id: idRestaurante, ativo: true })
+			.join('produto', 'restaurante.id', 'produto.restaurante_id')
 
-		const { restaurante_id, ativo, ...infoProduto } = produto;
-		const { usuario_id, ...infoRestaurante } = restaurante;
-
-		if (produto.length === 0)
+		if (produtos.length === 0)
 			return res.json('Desculpe, estamos em produtos ativos');
 
-		return res.status(200).json({ infoProduto, infoRestaurante });
+		const produtoDetalhado = produtos.find(item => item.id == idProduto)
+
+		if (!produtoDetalhado)
+			return res.json('Produto procurado não existe ou não está ativo');
+
+		let info = {
+			nome: produtoDetalhado.nome,
+			preco: produtoDetalhado.preco,
+			descricao: produtoDetalhado.descricao,
+			permiteObservacoes: produtoDetalhado.permite_observacoes,
+			imagem: produtoDetalhado.img_produto,
+			valorMinimo: produtoDetalhado.valor_minimo_pedido,
+			tempoEntrega: produtoDetalhado.tempo_entrega_minutos,
+		}
+
+		return res.status(200).json(info);
 	} catch (error) {
 		return res.status(400).json(error.message);
 	}
@@ -87,6 +101,11 @@ const adcionarEndereco = async (req, res) => {
 		await schema.verificarCEP.validate(req.body);
 
 		const { id: cliente_id } = jwt.verify(authorization, process.env.SENHA_JWT);
+
+		const enderecoBD = await knex('endereco').where({ cliente_id });
+
+		if (enderecoBD.length !== 0)
+			return res.status(400).json('Cliente já possui um endereço cadastrado');
 
 		const novoEndereco = {
 			cliente_id,
@@ -124,6 +143,7 @@ const fecharPedido = async (req, res) => {
 			subtotal: dadosPedido.subtotal,
 			taxa_entrega: dadosPedido.taxaEntrega,
 			total_pedido: dadosPedido.totalPedido,
+			enviado_entrega: dadosPedido.enviadoEntrega,
 		}
 
 		const pedidoCadastrado = await knex('pedido').insert(novoPedido).returning('*');
@@ -156,10 +176,37 @@ const fecharPedido = async (req, res) => {
 	}
 }
 
-const listarPedidos = async (req, res) => {
+const detalhesDoPedido = async (req, res) => {
+	const { authorization } = req.headers;
+	const { pedido: pedido_id } = req.body;
 
+	try {
+		const produtosCarrinho = []
+		const { id: cliente_id } = jwt.verify(authorization, process.env.SENHA_JWT);
+
+		const infoConsumidor = await knex('endereco').where({ cliente_id })
+			.join('cliente', 'cliente.id', 'endereco.cliente_id').first();
+
+		const produtosSolicitados = await knex('itens_pedido').where({ pedido_id })
+			.join('produto', 'produto.id', 'itens_pedido.produto_id');
+
+		for (let produto of produtosSolicitados) {
+			produtosCarrinho.push({ nome: produto.nome, quantidade: produto.quantidade_itens })
+		}
+
+		const infos = {
+			nome: infoConsumidor.nome,
+			cep: infoConsumidor.cep,
+			endereco: infoConsumidor.endereco,
+			complemento: infoConsumidor.complemento,
+			carrinho: produtosCarrinho
+		}
+
+		return res.json(infos)
+	} catch (error) {
+		return res.status(400).json(error.message);
+	}
 }
-
 
 module.exports =
 {
@@ -168,5 +215,6 @@ module.exports =
 	mostrarCardapio,
 	detalharProdutoRestaurante,
 	adcionarEndereco,
-	fecharPedido
+	fecharPedido,
+	detalhesDoPedido
 }

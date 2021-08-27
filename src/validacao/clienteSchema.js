@@ -18,7 +18,7 @@ const cadastrarCliente = yup.object().shape({
 		.min(6),
 
 	telefone: yup
-		.number()
+		.string()
 		.required()
 		.min(8),
 
