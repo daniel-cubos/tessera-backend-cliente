@@ -48,7 +48,7 @@ const mostrarCardapio = async (req, res) => {
 
 	try {
 		const produtos = await knex('produto').where({ restaurante_id, ativo });
-		const restaurante = await knex('restaurante').where({ id: restaurante_id });
+		const restaurante = await knex('restaurante').where({ id: restaurante_id }).first();
 
 		if (produtos.length === 0)
 			return res.json('Desculpe, estamos sem produtos ativos');
@@ -68,7 +68,13 @@ const detalharProdutoRestaurante = async (req, res) => {
 			.where({ restaurante_id: idRestaurante, ativo: true })
 			.join('produto', 'restaurante.id', 'produto.restaurante_id')
 
+		if (produtos.length === 0)
+			return res.json('Desculpe, estamos em produtos ativos');
+
 		const produtoDetalhado = produtos.find(item => item.id == idProduto)
+
+		if (!produtoDetalhado)
+			return res.json('Produto procurado não existe ou não está ativo');
 
 		let info = {
 			nome: produtoDetalhado.nome,
@@ -79,9 +85,6 @@ const detalharProdutoRestaurante = async (req, res) => {
 			valorMinimo: produtoDetalhado.valor_minimo_pedido,
 			tempoEntrega: produtoDetalhado.tempo_entrega_minutos,
 		}
-
-		if (produtos.length === 0)
-			return res.json('Desculpe, estamos em produtos ativos');
 
 		return res.status(200).json(info);
 	} catch (error) {
@@ -97,6 +100,11 @@ const adcionarEndereco = async (req, res) => {
 		await schema.verificarCEP.validate(req.body);
 
 		const { id: cliente_id } = jwt.verify(authorization, process.env.SENHA_JWT);
+
+		const enderecoBD = await knex('endereco').where({ cliente_id });
+
+		if (enderecoBD.length !== 0)
+			return res.status(400).json('Cliente já possui um endereço cadastrado');
 
 		const novoEndereco = {
 			cliente_id,
