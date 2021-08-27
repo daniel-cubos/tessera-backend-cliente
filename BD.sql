@@ -29,6 +29,7 @@ create table if not exists pedido
   subtotal integer not null,
  	taxa_entrega integer not null,
  	total_pedido integer not null,
+	enviado_entrega boolean not null default false, 
 
   foreign key (cliente_id) references cliente (id),
   foreign key (restaurante_id) references restaurante (id)
