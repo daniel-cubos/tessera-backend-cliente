@@ -10,6 +10,7 @@ const fazerLogin = async (req, res) => {
 		await schema.loginCliente.validate(req.body);
 
 		const cliente = await knex('cliente').where({ email }).first();
+		const endereco = await knex('endereco').where({ cliente_id: cliente.id }).first();
 
 		if (!cliente)
 			return res.status(404).json('Usuario não encontrado');
@@ -21,7 +22,7 @@ const fazerLogin = async (req, res) => {
 
 		const token = jwt.sign({ id: cliente.id }, process.env.SENHA_JWT, { expiresIn: '8h' });
 
-		return res.status(200).json({ token });
+		return res.status(200).json({ token, endereco });
 	}
 	catch (error) {
 		return res.status(400).json(error.message);
@@ -115,7 +116,7 @@ const adcionarEndereco = async (req, res) => {
 
 		const enderecoCadastrado = await knex('endereco').insert(novoEndereco).returning('*');
 
-		if (!enderecoCadastrado)
+		if (enderecoCadastrado.length === 0)
 			return res.status(400).json('Não foi possível realizar o cadastro do endereço.');
 
 		return res.status(200).json("Endereco cadastrado com sucesso");
@@ -135,6 +136,23 @@ const fecharPedido = async (req, res) => {
 		await schema.verificarPedido.validate(dadosPedido);
 
 		const { id: cliente_id } = jwt.verify(authorization, process.env.SENHA_JWT);
+		const endereco = await knex('endereco').where({ cliente_id }).first()
+
+		if (!endereco)
+			return res.status(404).json('Endereço não cadastrado, favor cadastrar o endereço');
+
+		const cardapioRestaurante = await knex('produto').where({ restaurante_id: dadosPedido.idRestaurante, ativo: true })
+
+		if (cardapioRestaurante.length === 0)
+			return res.json("Requisição inválida, não existem produtos disponiveis pra compra neste restaurante");
+
+		const verificarCarrinho = carrinho.every(item => {
+			const verificaItem = cardapioRestaurante.find(prato => prato.id == item.idProduto);
+			return verificaItem;
+		});
+
+		if (!verificarCarrinho)
+			return res.json('Carrinho possui itens que não existem neste cardápio');
 
 		const novoPedido = {
 			cliente_id,
@@ -147,62 +165,22 @@ const fecharPedido = async (req, res) => {
 
 		const pedidoCadastrado = await knex('pedido').insert(novoPedido).returning('*');
 
-		if (!pedidoCadastrado)
+		if (pedidoCadastrado.length === 0)
 			return res.status(400).json('Não foi possível realizar o cadastro do pedido.');
 
 		const { id: pedido_id } = pedidoCadastrado[0];
 
 		const produtosNoCarrinho = [];
-
-		for (let item of carrinho) {
-			let itemPedido = {
-				pedido_id,
-				produto_id: item.idProduto,
-				quantidade_itens: item.quantidade
-			}
-			produtosNoCarrinho.push(itemPedido);
-		}
+		carrinho.map(item => produtosNoCarrinho.push({ pedido_id, produto_id: item.idProduto, quantidade_itens: item.quantidade }));
 
 		const carrinhoCadastrado = await knex('itens_pedido').insert(produtosNoCarrinho).returning('*');
 
-		if (!carrinhoCadastrado)
+		if (carrinhoCadastrado.length === 0)
 			return res.status(400).json('Não foi possível realizar o cadastro os itens do carrinho.');
 
 		return res.json("Pedido Finalizado com sucesso!")
 	}
 	catch (error) {
-		return res.status(400).json(error.message);
-	}
-}
-
-const detalhesDoPedido = async (req, res) => {
-	const { authorization } = req.headers;
-	const { pedido: pedido_id } = req.body;
-
-	try {
-		const produtosCarrinho = []
-		const { id: cliente_id } = jwt.verify(authorization, process.env.SENHA_JWT);
-
-		const infoConsumidor = await knex('endereco').where({ cliente_id })
-			.join('cliente', 'cliente.id', 'endereco.cliente_id').first();
-
-		const produtosSolicitados = await knex('itens_pedido').where({ pedido_id })
-			.join('produto', 'produto.id', 'itens_pedido.produto_id');
-
-		for (let produto of produtosSolicitados) {
-			produtosCarrinho.push({ nome: produto.nome, quantidade: produto.quantidade_itens })
-		}
-
-		const infos = {
-			nome: infoConsumidor.nome,
-			cep: infoConsumidor.cep,
-			endereco: infoConsumidor.endereco,
-			complemento: infoConsumidor.complemento,
-			carrinho: produtosCarrinho
-		}
-
-		return res.json(infos)
-	} catch (error) {
 		return res.status(400).json(error.message);
 	}
 }
@@ -214,6 +192,5 @@ module.exports =
 	mostrarCardapio,
 	detalharProdutoRestaurante,
 	adcionarEndereco,
-	fecharPedido,
-	detalhesDoPedido
+	fecharPedido
 }
