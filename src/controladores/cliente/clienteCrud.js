@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const knex = require('../../bancodedados/conexao');
 const schema = require('../../validacao/clienteSchema');
-const { uploadImagem, atualizarImagem, pegarUrlImagem } = require('../../supabase');
+const { uploadImagem, atualizarImagem, pegarUrlImagem, tratarBase64 } = require('../../supabase');
 
 const cadastrarCliente = async (req, res) => {
 	const requisicaoCliente = req.body;
@@ -26,8 +26,11 @@ const cadastrarCliente = async (req, res) => {
 			return res.status(400).json('Não foi possível realizar o cadastro do cliente.');
 
 		if (requisicaoCliente.imagemCliente) {
-			const caminhoImagem = 'clientes/' + clienteCadastrado[0].id + '.jpg';
-			const uploadImage = uploadImagem(requisicaoCliente.imasgemCliente, caminhoImagem);
+
+			const { infoExtensao, infoBase64 } = tratarBase64;
+
+			const caminhoImagem = 'clientes/' + clienteCadastrado[0].id + '.' + infoExtensao;
+			const uploadImage = uploadImagem(infoBase64, caminhoImagem);
 
 			if (uploadImage.length === 0)
 				return res.status(400).json(uploadImage);
@@ -67,8 +70,10 @@ const editarCliente = async (req, res) => {
 		}
 
 		if (requisicaoCliente.imagemCliente) {
-			const caminhoImagem = 'clientes/' + id.toString() + '.jpg';
-			const uploadImage = atualizarImagem(requisicaoCliente.imagemCliente, caminhoImagem);
+			const { infoExtensao, infoBase64 } = tratarBase64;
+
+			const caminhoImagem = 'clientes/' + id.toString() + '.' + infoExtensao;
+			const uploadImage = atualizarImagem(infoBase64, caminhoImagem);
 
 			if (uploadImage.length === 0)
 				return res.status(400).json(uploadImage);

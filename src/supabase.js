@@ -49,4 +49,20 @@ async function pegarUrlImagem(caminhoImagem) {
 
 	return publicURL;
 }
-module.exports = { uploadImagem, atualizarImagem, pegarUrlImagem };
+
+function tratarBase64(requisicao) {
+	const separarInfoBase64 = requisicao.split(';');
+
+	let infoBase64 = separarInfoBase64[1].split('');
+	let infoExtensao = separarInfoBase64[0].split('');
+
+	infoExtensao.splice(0, (infoExtensao.findIndex(x => x === '/') + 1));
+	infoExtensao = infoExtensao.join('').trim();
+
+	infoBase64.splice(0, (infoBase64.findIndex(x => x === ',') + 1));
+	infoBase64 = infoBase64.join('').trim();
+
+	return { infoExtensao, infoBase64 }
+}
+
+module.exports = { uploadImagem, atualizarImagem, pegarUrlImagem, tratarBase64 };
